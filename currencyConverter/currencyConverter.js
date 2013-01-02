@@ -21,13 +21,14 @@ var tutorials = tutorials || {};
 	        conversionUpdated: null
 	    },
 		produceTree: "tutorials.currencyConverter.produceTree",
+		finalInitFunction: "tutorials.currencyConverter.finalInit",
 		renderOnInit: true
 	});
 	
 	var bindEventHandlers = function (that) {
-		that.applier.modelChanged.addListener("amount", function () {
-			that.convert(that.model.amount);
-		});
+        that.applier.modelChanged.addListener("amount", function () {
+         that.convert(that.model.amount);
+        });
 		that.applier.modelChanged.addListener("currentSelection", function () {
 			that.convert(that.model.amount);
 		});
@@ -49,7 +50,6 @@ var tutorials = tutorials || {};
 	};
 	
 	tutorials.currencyConverter.finalInit = function (that) {
-		
 	    that.convert = function (amount) {
 	        var convertedAmount = parseInt(amount) * that.model.currentSelection;
 	        that.applier.requestChange("result", convertedAmount);
@@ -58,7 +58,5 @@ var tutorials = tutorials || {};
 		
 		bindEventHandlers(that);
 	};
-	
-	tutorials.currencyConverter("#converter");
-	
+		
 })(jQuery, fluid_1_4);
