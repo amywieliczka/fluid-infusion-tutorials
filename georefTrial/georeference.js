@@ -30,7 +30,7 @@ var cspace = cspace || {};
             georefRemarks: ".csc-georefRemarks"
 		},
 		model: {
-			source: "santa cruz, ca",
+			source: "Troy",
 			latitude: "",
 			longitude: "",
 			datum: "",
@@ -75,23 +75,88 @@ var cspace = cspace || {};
 					func: "click",
 					args: (
 					    function() { 
-					        georefjs.googleGeoref(that.model.source, function(val) {
-					            console.log(val[0]);
-					            that.applier.requestChange("latitude", val[0].decimalLatitude);
-					            that.applier.requestChange("longitude", val[0].decimalLongitude);
-					            that.applier.requestChange("datum", val[0].geodeticDatum);
-					            that.applier.requestChange("uncertainty", val[0].coordinateUncertaintyInMeters);
-					            that.applier.requestChange("uncertaintyUnits", "meters");
-					            that.applier.requestChange("protocol", val[0].georeferenceProtocol);					            
-					            that.applier.requestChange("remarks", val[0].georeferenceRemarks);
-					            that.refreshView();
-					            $(that.options.selectors.georefLatitude).css({"background": "#fffbbb"});
-					            $(that.options.selectors.georefLongitude).css({"background": "#fffbbb"});
-					            $(that.options.selectors.georefDatum).css({"background": "#fffbbb"});					            
-					            $(that.options.selectors.georefUncertainty).css({"background": "#fffbbb"});
-					            $(that.options.selectors.georefUncertaintyUnits).css({"background": "#fffbbb"});
-                                $(that.options.selectors.georefProtocol).css({"background": "#fffbbb"});
-					            $(that.options.selectors.georefRemarks).css({"background": "#fffbbb"});
+					        georefjs.googleGeoref(that.model.source, function(georefs) {
+					            var location = new google.maps.LatLng(georefs[0].decimalLatitude, georefs[0].decimalLongitude);
+					            var bounds = new google.maps.LatLngBounds();
+					            var radius, contentString;
+					            var markers = [];
+					            var circles = [];
+					            
+					            function georefMarkerAssignment(marker, content) {
+					                var infowindow = new google.maps.InfoWindow({
+                                        content: content
+                                    });
+                                    
+                                    google.maps.event.addListener(marker, 'click', function() {
+                                        infowindow.open(map, marker);
+                                    });
+					            }
+					            
+					            function georefBindSelectClick(id) {
+                                    var infowindowId = ".csc-select-" + id;
+                                    $(infowindowId).live('click', function(e) {
+                                        console.log(georefs[id]);
+                                    });
+					            }
+					            
+                              	var map = new google.maps.Map($('.map')[0], {zoom: 4, center: location, mapTypeId: google.maps.MapTypeId.ROADMAP});
+                                
+                                for (i=0; i<georefs.length; i++) {
+                                    location = new google.maps.LatLng(georefs[i].decimalLatitude, georefs[i].decimalLongitude);
+                                    map.setCenter(location);
+                                    
+                                    radius = georefs[i].coordinateUncertaintyInMeters;
+                                    contentString = that.model.source + '<br>' + georefs[i].print() + '<br>' + 
+                                        '<a href="#" class="csc-select-' + i +'">Select This</a>';
+                                                                        
+                                    var marker = new google.maps.Marker({
+                                        position: location,
+                                        map: map,
+                                        title: that.model.source
+                                    });
+                                    
+                                    georefMarkerAssignment(marker, contentString);
+
+                                    georefBindSelectClick(i);
+                                                                        
+                                    var circle = new google.maps.Circle({
+                                        map: map,
+                                        radius: radius,
+                                        fillColor: '#ff00dd',
+                                        fillOpacity: 0.05,
+                                        strokeOpacity: 0.5,
+                                        strokeWidth: 1,
+                                        strokeColor: '#ff00dd',
+                                        clickable: false
+                                    });
+                                    
+                                    circle.bindTo('center', marker, 'position');
+                                    
+                                    markers.push(marker);
+                                    circles.push(circle);
+                                    
+                                    var b = circle.getBounds();
+                                    bounds.extend(b.getNorthEast());
+                                    bounds.extend(b.getSouthWest());
+                                }
+                                
+                                map.fitBounds(bounds);
+					            					            
+                                // that.applier.requestChange("latitude", georefs[0].decimalLatitude);
+                                // that.applier.requestChange("longitude", georefs[0].decimalLongitude);
+                                // that.applier.requestChange("datum", georefs[0].geodeticDatum);
+                                // that.applier.requestChange("uncertainty", georefs[0].coordinateUncertaintyInMeters);
+                                // that.applier.requestChange("uncertaintyUnits", "meters");
+                                // that.applier.requestChange("protocol", georefs[0].georeferenceProtocol);                             
+                                // that.applier.requestChange("remarks", georefs[0].georeferenceRemarks);
+                                // that.refreshView();
+                                // $(that.options.selectors.georefLatitude).css({"background": "#fffbbb"});
+                                // $(that.options.selectors.georefLongitude).css({"background": "#fffbbb"});
+                                // $(that.options.selectors.georefDatum).css({"background": "#fffbbb"});                                
+                                // $(that.options.selectors.georefUncertainty).css({"background": "#fffbbb"});
+                                // $(that.options.selectors.georefUncertaintyUnits).css({"background": "#fffbbb"});
+                                //                                 $(that.options.selectors.georefProtocol).css({"background": "#fffbbb"});
+                                // $(that.options.selectors.georefRemarks).css({"background": "#fffbbb"});
 					        });
 					    }
 					)
