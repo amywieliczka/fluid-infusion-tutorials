@@ -81,32 +81,31 @@ var cspace = cspace || {};
 					            //source context and function context (populateTargetFields) to the array of georef objects
 					            //displayMap displays a map for the user to choose one georef object from, then calls
 					            //populateTargetFields with the selected georef object as the parameter
-					            displayMap(that.model.source, georefs, populateTargetFields);
+					            displayMap(that.model.source, georefs, function (result) {
+                                        that.applier.requestChange("latitude", result.decimalLatitude);
+                                        that.applier.requestChange("longitude", result.decimalLongitude);
+                                        that.applier.requestChange("datum", result.geodeticDatum);
+                                        that.applier.requestChange("uncertainty", result.coordinateUncertaintyInMeters);
+                                        that.applier.requestChange("uncertaintyUnits", "meters");
+                                        that.applier.requestChange("protocol", result.georeferenceProtocol);                             
+                                        that.applier.requestChange("remarks", result.georeferenceRemarks);
+                                        that.refreshView();
+                                        $(that.options.selectors.georefLatitude).css({"background": "#fffbbb"});
+                                        $(that.options.selectors.georefLongitude).css({"background": "#fffbbb"});
+                                        $(that.options.selectors.georefDatum).css({"background": "#fffbbb"});                                
+                                        $(that.options.selectors.georefUncertainty).css({"background": "#fffbbb"});
+                                        $(that.options.selectors.georefUncertaintyUnits).css({"background": "#fffbbb"});
+                                        $(that.options.selectors.georefProtocol).css({"background": "#fffbbb"});
+                                        $(that.options.selectors.georefRemarks).css({"background": "#fffbbb"});	    
+                                });
+					        });
 					    }
                     )
                 }]
 			}
 		};
 	}
-	
-	var populateTargetFields = function (result) {
-        that.applier.requestChange("latitude", result.decimalLatitude);
-        that.applier.requestChange("longitude", result.decimalLongitude);
-        that.applier.requestChange("datum", result.geodeticDatum);
-        that.applier.requestChange("uncertainty", result.coordinateUncertaintyInMeters);
-        that.applier.requestChange("uncertaintyUnits", "meters");
-        that.applier.requestChange("protocol", result.georeferenceProtocol);                             
-        that.applier.requestChange("remarks", result.georeferenceRemarks);
-        that.refreshView();
-        $(that.options.selectors.georefLatitude).css({"background": "#fffbbb"});
-        $(that.options.selectors.georefLongitude).css({"background": "#fffbbb"});
-        $(that.options.selectors.georefDatum).css({"background": "#fffbbb"});                                
-        $(that.options.selectors.georefUncertainty).css({"background": "#fffbbb"});
-        $(that.options.selectors.georefUncertaintyUnits).css({"background": "#fffbbb"});
-        $(that.options.selectors.georefProtocol).css({"background": "#fffbbb"});
-        $(that.options.selectors.georefRemarks).css({"background": "#fffbbb"});	    
-	}
-	
+		
 	var displayMap = function (source, georefs, callback) {
 	    var location = new google.maps.LatLng(georefs[0].decimalLatitude, georefs[0].decimalLongitude);
         var bounds = new google.maps.LatLngBounds();
