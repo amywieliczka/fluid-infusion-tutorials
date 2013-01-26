@@ -30,6 +30,10 @@ var cspace = cspace || {};
             georefRemarks: ".csc-georefRemarks"
         },
         model: {
+            //TODO: unclear if I should be maintaining a model internal to 
+            //cspace.georeference component or somehow hooking into recordeditor component's model
+            //or in the instance of cataloging locality group, hooking into the repeatable component's model?
+            //relates to produceTree, below, since the optionnames/optionlist is defined by a json payload from the app layer
             source: "Troy",
             latitude: "",
             longitude: "",
@@ -38,9 +42,6 @@ var cspace = cspace || {};
             uncertaintyUnits: "",
             protocol: "",
             remarks: ""
-        },
-        events: {
-            onGeoRef: null,
         },
         produceTree: "cspace.georeference.produceTree",
         finalInitFunction: "cspace.georeference.finalInit",
@@ -82,6 +83,8 @@ var cspace = cspace || {};
                                 //displayMap displays a map for the user to choose one georef object from, then calls
                                 //populateTargetFields with the selected georef object as the parameter
                                 displayMap(that.model.source, georefs, function (result) {
+                                    //TODO: probably move this callback function elsewhere
+                                    //TODO: write this function more elegantly
                                     that.applier.requestChange("latitude", result.decimalLatitude);
                                     that.applier.requestChange("longitude", result.decimalLongitude);
                                     that.applier.requestChange("datum", result.geodeticDatum);
@@ -112,8 +115,12 @@ var cspace = cspace || {};
         var radius, contentString;
         var markers = [];
         var circles = [];
+        //TODO: test that $('.map') exists first - choose a more unique namespace
+        var map = new google.maps.Map($('.map')[0], {zoom: 4, center: location, mapTypeId: google.maps.MapTypeId.ROADMAP});
         
-        function georefMarkerAssignment(marker, content) {
+        //assigns an info window with given content to provided marker
+        //TODO: presumably at some point we will want to close these infowindows programmatically
+        function assignInfoWindow(marker, content) {
             var infowindow = new google.maps.InfoWindow({
                 content: content
             });
@@ -123,33 +130,33 @@ var cspace = cspace || {};
             });
         }
         
-        function georefBindSelectClick(id) {
+        //assigns a click handler to each info window's select link
+        //calls the provided callback function on the selected georef object
+        //TODO: probably want to make the map disappear at this point? 
+        function assignSelectClickHandler(id) {
             var infowindowId = ".csc-select-" + id;
             $(infowindowId).live('click', function(e) {
                 callback(georefs[id]);
             });
         }
-        
-        var map = new google.maps.Map($('.map')[0], {zoom: 4, center: location, mapTypeId: google.maps.MapTypeId.ROADMAP});
-        
+                
         for (i=0; i<georefs.length; i++) {
             location = new google.maps.LatLng(georefs[i].decimalLatitude, georefs[i].decimalLongitude);
             map.setCenter(location);
-            
             radius = georefs[i].coordinateUncertaintyInMeters;
             contentString = source + '<br>' + georefs[i].print() + '<br>' + 
                 '<a href="#" class="csc-select-' + i +'">Select This</a>';
-                                                
+            
+            //create google maps marker
             var marker = new google.maps.Marker({
                 position: location,
                 map: map,
                 title: source
             });
+            assignInfoWindow(marker, contentString);
+            assignSelectClickHandler(i);
             
-            georefMarkerAssignment(marker, contentString);
-            
-            georefBindSelectClick(i);
-            
+            //create a circle
             var circle = new google.maps.Circle({
                 map: map,
                 radius: radius,
@@ -160,9 +167,9 @@ var cspace = cspace || {};
                 strokeColor: '#ff00dd',
                 clickable: false
             });
-            
             circle.bindTo('center', marker, 'position');
             
+            //TODO: definitely need to clean these arrays up whenever we clear the map?
             markers.push(marker);
             circles.push(circle);
             
@@ -175,6 +182,7 @@ var cspace = cspace || {};
         
     }
 	
+	//this is just here to remind myself how finalInit works, and as a hook for debugging
     cspace.georeference.finalInit = function (that) {};
     
 })(jQuery, fluid_1_4);
